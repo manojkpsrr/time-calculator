@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weekly Time Calculator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+      margin-bottom: 2rem;
+    }
+
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #eee;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    input[type="time"] {
+      width: 90%;
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      width: 48%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      margin: 0.5rem 1%;
+      border: none;
+      border-radius: 8px;
+      background-color: #007bff;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .buttons {
+      position: sticky;
+      bottom: 0;
+      background: #f9f9f9;
+      padding: 0.5rem 0;
+      text-align: center;
+      z-index: 10;
+    }
+
+    .result {
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      table, th, td {
+        font-size: 0.85rem;
+      }
+      button {
+        font-size: 0.9rem;
+        padding: 0.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Weekly Time Calculator</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Day</th>
+        <th>In Time</th>
+        <th>Out Time</th>
+        <th>Saved Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Monday</td><td><input type="time" id="in0"></td><td><input type="time" id="out0"></td><td id="result0"></td></tr>
+      <tr><td>Tuesday</td><td><input type="time" id="in1"></td><td><input type="time" id="out1"></td><td id="result1"></td></tr>
+      <tr><td>Wednesday</td><td><input type="time" id="in2"></td><td><input type="time" id="out2"></td><td id="result2"></td></tr>
+      <tr><td>Thursday</td><td><input type="time" id="in3"></td><td><input type="time" id="out3"></td><td id="result3"></td></tr>
+      <tr><td>Friday</td><td><input type="time" id="in4"></td><td><input type="time" id="out4"></td><td id="result4"></td></tr>
+    </tbody>
+  </table>
+
+  <div class="result" id="weeklySummary"></div>
+  <div class="result" id="fridayLeaveTime"></div>
+
+  <div class="buttons">
+    <button onclick="calculateTime()">Calculate</button>
+    <button onclick="resetFields()">Reset</button>
+  </div>
+
+  <script>
+    function calculateTime() {
+      const standardMinutes = 8 * 60 + 30;
+      let totalSavedMinutes = 0;
+
+      for (let i = 0; i < 5; i++) {
+        const inTime = document.getElementById(`in${i}`).value;
+        const outTime = document.getElementById(`out${i}`).value;
+        const resultCell = document.getElementById(`result${i}`);
+
+        if (inTime && outTime) {
+          const [inH, inM] = inTime.split(":").map(Number);
+          const [outH, outM] = outTime.split(":").map(Number);
+          let minutesIn = inH * 60 + inM;
+          let minutesOut = outH * 60 + outM;
+          if (minutesOut < minutesIn) minutesOut += 1440;
+
+          let worked = minutesOut - minutesIn;
+          let diff = worked - standardMinutes;
+
+          if (i < 4) totalSavedMinutes += diff;
+
+          const absDiff = Math.abs(diff);
+          const h = Math.floor(absDiff / 60);
+          const m = absDiff % 60;
+
+          if (i < 4) {
+            resultCell.style.color = diff >= 0 ? 'green' : 'red';
+            resultCell.innerText = diff >= 0 ? `+${h}h ${m}m` : `-${h}h ${m}m`;
+          } else {
+            resultCell.innerText = '';
+          }
+        } else {
+          resultCell.innerText = '';
+        }
+      }
+
+      const absTotal = Math.abs(totalSavedMinutes);
+      const th = Math.floor(absTotal / 60);
+      const tm = absTotal % 60;
+      const summary = document.getElementById("weeklySummary");
+      summary.style.color = totalSavedMinutes >= 0 ? 'green' : 'red';
+      summary.innerText = totalSavedMinutes >= 0
+        ? `Extra time Mon–Thu: +${th}h ${tm}m`
+        : `Time short Mon–Thu: -${th}h ${tm}m`;
+
+      const fridayInValue = document.getElementById("in4").value;
+      const fridayOutField = document.getElementById("out4");
+      const fridayMsg = document.getElementById("fridayLeaveTime");
+
+      if (fridayInValue) {
+        const [fH, fM] = fridayInValue.split(":").map(Number);
+        const fridayStart = fH * 60 + fM;
+        let requiredFridayMinutes = standardMinutes - totalSavedMinutes;
+        if (requiredFridayMinutes < 0) requiredFridayMinutes = 0;
+
+        const fridayLeave = fridayStart + requiredFridayMinutes;
+        const leaveHour24 = Math.floor(fridayLeave / 60) % 24;
+        const leaveMin = fridayLeave % 60;
+
+        const period = leaveHour24 >= 12 ? "PM" : "AM";
+        const hour12 = leaveHour24 % 12 || 12;
+        const formatted = `${hour12.toString().padStart(2, '0')}:${leaveMin.toString().padStart(2, '0')} ${period}`;
+
+        fridayOutField.value = `${leaveHour24.toString().padStart(2, '0')}:${leaveMin.toString().padStart(2, '0')}`;
+
+        if (totalSavedMinutes > 0) {
+          fridayMsg.style.color = 'blue';
+          fridayMsg.innerText = `🕒 You can leave early on Friday at: ${formatted}`;
+        } else if (totalSavedMinutes === 0) {
+          fridayMsg.style.color = 'black';
+          fridayMsg.innerText = `🕒 No savings. Leave Friday at: ${formatted}`;
+        } else {
+          fridayMsg.style.color = 'red';
+          fridayMsg.innerText = `🕒 Time short Mon–Thu. Stay until: ${formatted}`;
+        }
+      } else {
+        fridayMsg.innerText = '';
+        fridayOutField.value = '';
+      }
+    }
+
+    function resetFields() {
+      for (let i = 0; i < 5; i++) {
+        document.getElementById(`in${i}`).value = '';
+        document.getElementById(`out${i}`).value = '';
+        document.getElementById(`result${i}`).innerT
