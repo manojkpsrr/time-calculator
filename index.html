@@ -197,8 +197,16 @@
       }
     }
 
-    function resetFields() {
+        function resetFields() {
       for (let i = 0; i < 5; i++) {
         document.getElementById(`in${i}`).value = '';
         document.getElementById(`out${i}`).value = '';
-        document.getElementById(`result${i}`).innerT
+        document.getElementById(`result${i}`).innerText = '';
+      }
+      document.getElementById("weeklySummary").innerText = '';
+      document.getElementById("fridayLeaveTime").innerText = '';
+    }
+  </script>
+
+</body>
+</html>
